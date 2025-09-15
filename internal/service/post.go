@@ -7,6 +7,7 @@ import (
 
 type PostService interface {
 	CreatePost(post *models.Post) error
+	SearchPostsByTag(tag string) ([]*models.Post, error)
 }
 
 type postService struct {
@@ -19,4 +20,8 @@ func NewPostService(repo repository.PostRepository) PostService {
 
 func (s *postService) CreatePost(post *models.Post) error {
 	return s.repo.CreatePost(post)
+}
+
+func (s *postService) SearchPostsByTag(tag string) ([]*models.Post, error) {
+	return s.repo.SearchPostsByTag(tag)
 }

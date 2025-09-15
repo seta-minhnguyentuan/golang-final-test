@@ -36,7 +36,7 @@ func LoadDB() *DatabaseConfig {
 		Host:     utils.GetEnv("DB_HOST", "localhost"),
 		User:     utils.GetEnv("DB_USER", "postgres"),
 		Password: utils.GetEnv("DB_PASSWORD", ""),
-		DBName:   utils.GetEnv("DB_NAME", "postgres"),
+		DBName:   utils.GetEnv("DB_NAME", "golang_final_test"),
 		Port:     port,
 		SSLMode:  utils.GetEnv("DB_SSLMODE", "disable"),
 	}
