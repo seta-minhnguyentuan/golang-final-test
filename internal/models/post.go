@@ -8,9 +8,9 @@ import (
 )
 
 type Post struct {
-	ID        uuid.UUID      `json:"id"`
-	Title     string         `json:"title"`
-	Content   string         `json:"content"`
-	Tags      pq.StringArray `json:"tags" gorm:"type:text[]"`
-	CreatedAt time.Time      `json:"created_at"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4()" json:"id"`
+	Title     string         `gorm:"column:title" json:"title"`
+	Content   string         `gorm:"column:content" json:"content"`
+	Tags      pq.StringArray `gorm:"column:tags;type:text[]" json:"tags"`
+	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 }
