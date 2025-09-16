@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"golang-final-test/internal/database"
 	"golang-final-test/internal/models"
 	"golang-final-test/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type PostHandler struct {
@@ -29,18 +27,10 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 
-	err := database.WithTransaction(func(tx *gorm.DB) error {
-		post := models.Post{Title: post.Title, Content: post.Content, Tags: post.Tags}
-		if err := tx.Create(&post).Error; err != nil {
-			return err
-		}
-
-		logEntry := models.ActivityLog{Action: "post_created", PostID: post.ID}
-		if err := tx.Create(&logEntry).Error; err != nil {
-			return err
-		}
-
-		return nil
+	err := h.svc.CreatePost(&models.Post{
+		Title:   post.Title,
+		Content: post.Content,
+		Tags:    post.Tags,
 	})
 
 	if err != nil {
@@ -49,6 +39,26 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	c.JSON(201, gin.H{"message": "Post created successfully"})
+}
+
+func (h *PostHandler) GetPostByID(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(400, gin.H{"error": "id parameter is required"})
+		return
+	}
+
+	post, err := h.svc.GetPostByID(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	if post == nil {
+		c.JSON(404, gin.H{"error": "Post not found"})
+		return
+	}
+
+	c.JSON(200, post)
 }
 
 func (h *PostHandler) SearchPostsByTag(c *gin.Context) {

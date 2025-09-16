@@ -18,21 +18,15 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-var cfg *DatabaseConfig
-
 func LoadDB() *DatabaseConfig {
 	_ = godotenv.Load()
-
-	if cfg != nil {
-		return cfg
-	}
 
 	port, err := strconv.Atoi(utils.GetEnv("DB_PORT", "5432"))
 	if err != nil {
 		log.Fatalf("Invalid DB_PORT: %v", err)
 	}
 
-	cfg = &DatabaseConfig{
+	return &DatabaseConfig{
 		Host:     utils.GetEnv("DB_HOST", "localhost"),
 		User:     utils.GetEnv("DB_USER", "postgres"),
 		Password: utils.GetEnv("DB_PASSWORD", ""),
@@ -41,7 +35,6 @@ func LoadDB() *DatabaseConfig {
 		SSLMode:  utils.GetEnv("DB_SSLMODE", "disable"),
 	}
 
-	return cfg
 }
 
 func (c *DatabaseConfig) DSN() string {

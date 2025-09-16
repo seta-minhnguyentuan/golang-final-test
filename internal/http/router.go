@@ -28,6 +28,7 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 	{
 		h := handlers.NewPostHandler(deps.PostService)
 		posts.POST("/", h.CreatePost)
+		posts.GET("/:id", h.GetPostByID)
 		posts.GET("/search-by-tag", h.SearchPostsByTag)
 	}
 

@@ -6,6 +6,7 @@ import (
 	httpserver "golang-final-test/internal/http"
 	"golang-final-test/internal/repository"
 	"golang-final-test/internal/service"
+	"golang-final-test/pkg/cache"
 	"log"
 	"net/http"
 	"time"
@@ -24,6 +25,8 @@ func main() {
 	if err := database.Migrate(db); err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}
+
+	cache.InitRedis()
 
 	postRepo := repository.NewPostRepository(db)
 	postService := service.NewPostService(postRepo)
