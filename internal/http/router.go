@@ -30,6 +30,8 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 		posts.POST("/", h.CreatePost)
 		posts.GET("/:id", h.GetPostByID)
 		posts.GET("/search-by-tag", h.SearchPostsByTag)
+		posts.PUT("/", h.UpdatePost)
+		posts.GET("/search", h.SearchPosts)
 	}
 
 	return r

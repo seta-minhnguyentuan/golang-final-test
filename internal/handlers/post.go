@@ -3,8 +3,11 @@ package handlers
 import (
 	"golang-final-test/internal/models"
 	"golang-final-test/internal/service"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type PostHandler struct {
@@ -58,7 +61,7 @@ func (h *PostHandler) GetPostByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, post)
+	c.JSON(http.StatusOK, post)
 }
 
 func (h *PostHandler) SearchPostsByTag(c *gin.Context) {
@@ -74,5 +77,82 @@ func (h *PostHandler) SearchPostsByTag(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, posts)
+	c.JSON(http.StatusOK, posts)
+}
+
+func (h *PostHandler) UpdatePost(c *gin.Context) {
+	var post struct {
+		ID      string   `json:"id" binding:"required"`
+		Title   string   `json:"title" binding:"required"`
+		Content string   `json:"content" binding:"required"`
+		Tags    []string `json:"tags" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&post); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id, err := uuid.Parse(post.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ID format"})
+		return
+	}
+
+	err = h.svc.UpdatePost(&models.Post{
+		ID:      id,
+		Title:   post.Title,
+		Content: post.Content,
+		Tags:    post.Tags,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully"})
+}
+
+func (h *PostHandler) SearchPosts(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "query parameter 'q' is required",
+		})
+		return
+	}
+
+	offsetStr := c.DefaultQuery("offset", "0")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid offset parameter",
+		})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 || limit > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid limit parameter (must be 1-100)",
+		})
+		return
+	}
+
+	posts, total, err := h.svc.SearchPosts(query, offset, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to search posts",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"posts":  posts,
+		"total":  total,
+		"offset": offset,
+		"limit":  limit,
+	})
 }

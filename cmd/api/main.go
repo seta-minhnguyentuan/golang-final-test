@@ -3,10 +3,11 @@ package main
 import (
 	"golang-final-test/internal/config"
 	"golang-final-test/internal/database"
+	"golang-final-test/internal/elasticsearch"
 	httpserver "golang-final-test/internal/http"
+	"golang-final-test/internal/redis"
 	"golang-final-test/internal/repository"
 	"golang-final-test/internal/service"
-	"golang-final-test/pkg/cache"
 	"log"
 	"net/http"
 	"time"
@@ -26,7 +27,8 @@ func main() {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
-	cache.InitRedis()
+	redis.InitRedis()
+	elasticsearch.InitElasticsearch()
 
 	postRepo := repository.NewPostRepository(db)
 	postService := service.NewPostService(postRepo)
