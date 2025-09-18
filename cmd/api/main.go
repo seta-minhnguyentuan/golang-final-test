@@ -27,8 +27,15 @@ func main() {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
-	redis.InitRedis()
-	elasticsearch.InitElasticsearch()
+	redisClient := redis.InitRedis()
+	if redisClient == nil {
+		log.Fatal("Failed to initialize Redis client")
+	}
+
+	esClient := elasticsearch.InitElasticsearch()
+	if esClient == nil {
+		log.Fatal("Failed to initialize Elasticsearch client")
+	}
 
 	postRepo := repository.NewPostRepository(db)
 	postService := service.NewPostService(postRepo)

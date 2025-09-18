@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
+
+	"golang-final-test/internal/config"
 
 	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/elastic/go-elasticsearch/v9/esapi"
@@ -18,28 +21,36 @@ var (
 
 func InitElasticsearch() *elasticsearch.Client {
 	once.Do(func() {
+		cfg := config.LoadElasticsearchConfig()
+		address := fmt.Sprintf("http://%s:%s", cfg.Host, cfg.Port)
+
 		var err error
-		ES, err = elasticsearch.NewDefaultClient()
+		ES, err = elasticsearch.NewClient(elasticsearch.Config{
+			Addresses: []string{address},
+		})
 		if err != nil {
-			log.Printf("Warning: failed to init elasticsearch: %v", err)
-			log.Printf("Search functionality will be disabled")
+			log.Printf("Warning: failed to init elasticsearch client: %v", err)
 			ES = nil
-		} else {
-			_, err = ES.Info()
-			if err != nil {
-				log.Printf("Warning: elasticsearch not reachable: %v", err)
-				log.Printf("Search functionality will be disabled")
-				ES = nil
-			} else {
-				log.Printf("Elasticsearch connected successfully")
-				if err := createPostsIndex(); err != nil {
-					log.Printf("Warning: failed to create posts index: %v", err)
-				}
-			}
+			return
+		}
+
+		res, err := ES.Info()
+		if err != nil {
+			log.Printf("Warning: elasticsearch not reachable at %s: %v", address, err)
+			ES = nil
+			return
+		}
+		defer res.Body.Close()
+
+		log.Printf("Elasticsearch connected successfully at %s", address)
+
+		if err := createPostsIndex(); err != nil {
+			log.Printf("Warning: failed to create posts index: %v", err)
 		}
 	})
 	return ES
 }
+
 func createPostsIndex() error {
 	req := esapi.IndicesExistsRequest{
 		Index: []string{"posts"},
@@ -49,7 +60,7 @@ func createPostsIndex() error {
 	if err != nil {
 		return err
 	}
-	res.Body.Close()
+	defer res.Body.Close()
 
 	if res.StatusCode == 200 {
 		log.Printf("Posts index already exists")
@@ -60,14 +71,8 @@ func createPostsIndex() error {
 		"mappings": {
 			"properties": {
 				"id": {"type": "keyword"},
-				"title": {
-					"type": "text",
-					"analyzer": "standard"
-				},
-				"content": {
-					"type": "text",
-					"analyzer": "standard"
-				},
+				"title": {"type": "text", "analyzer": "standard"},
+				"content": {"type": "text", "analyzer": "standard"},
 				"created_at": {"type": "date"},
 				"updated_at": {"type": "date"}
 			}
@@ -91,7 +96,7 @@ func createPostsIndex() error {
 
 	if createRes.IsError() {
 		var response map[string]interface{}
-		json.NewDecoder(createRes.Body).Decode(&response)
+		_ = json.NewDecoder(createRes.Body).Decode(&response)
 		log.Printf("Failed to create posts index: %v", response)
 		return nil
 	}
