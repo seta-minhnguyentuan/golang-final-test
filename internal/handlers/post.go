@@ -26,7 +26,7 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&post); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -37,27 +37,27 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(201, gin.H{"message": "Post created successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Post created successfully"})
 }
 
 func (h *PostHandler) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(400, gin.H{"error": "id parameter is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id parameter is required"})
 		return
 	}
 
 	post, err := h.svc.GetPostByID(id)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if post == nil {
-		c.JSON(404, gin.H{"error": "Post not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 		return
 	}
 
